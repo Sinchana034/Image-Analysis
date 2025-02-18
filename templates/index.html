@@ -1,0 +1,92 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Image Classifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            text-align: center;
+            
+        }
+        .container {
+            background-color:#F2D7D5;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #imagePreview {
+            max-width: 300px;
+            margin: 20px auto;
+            display: none;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+        }
+        .prediction-item {
+            background-color: #fff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Classifier</h1>
+        <p>Upload an image to classify it</p>
+        
+        <input type="file" id="imageInput" accept="image/*">
+        <img id="imagePreview" src="#" alt="Preview">
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Show image preview
+                const preview = document.getElementById('imagePreview');
+                preview.style.display = 'block';
+                preview.src = URL.createObjectURL(file);
+
+                // Upload and analyze image
+                const formData = new FormData();
+                formData.append('image', file);
+
+                // Show loading message
+                const results = document.getElementById('results');
+                results.innerHTML = 'Analyzing image...';
+
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        results.innerHTML = `<div class="prediction-item">Error: ${data.error}</div>`;
+                    } else {
+                        results.innerHTML = data.predictions.map(pred => `
+                            <div class="prediction-item">
+                                ${pred.label}: ${pred.probability.toFixed(2)}%
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(error => {
+                    results.innerHTML = `<div class="prediction-item">Error: ${error.message}</div>`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
